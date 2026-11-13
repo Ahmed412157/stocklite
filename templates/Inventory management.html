@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockLite - Inventory Management</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+:root {
+  --bg:#eaf4f6;
+  --panel:#ffffff;
+  --sidebar:#164e63;
+  --sidebar-dark:#103b4b;
+  --text:#183744;
+  --muted:#718792;
+  --border:#dce8eb;
+  --accent:#1c667b;
+  --soft:#edf7f8;
+  --green:#168568;
+  --orange:#b77945;
+  --red:#c84d4d;
+  --shadow:0 4px 18px rgba(19,65,79,.05);
+}
+body.dark {
+  --bg:#102f39;
+  --panel:#193d48;
+  --sidebar:#164e63;
+  --sidebar-dark:#103b4b;
+  --text:#f1f7fa;
+  --muted:#a8bec6;
+  --border:#315662;
+  --accent:#78c9df;
+  --soft:#214650;
+  --green:#64d6b4;
+  --orange:#f1b47d;
+  --red:#ff9999;
+  --shadow:0 4px 18px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;transition:background .2s,color .2s}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{width:235px;background:var(--sidebar);color:white;position:fixed;inset:0 auto 0 0;display:flex;flex-direction:column;padding:24px 14px;z-index:10;overflow-y:auto}
+.profile{text-align:center;padding:5px 4px 27px;border-bottom:1px solid rgba(255,255,255,.15)}
+.avatar{width:66px;height:66px;border-radius:50%;background:#e6f5f8;color:var(--sidebar);display:grid;place-items:center;font-size:28px;margin:0 auto 12px;border:4px solid rgba(255,255,255,.5)}
+.profile h3{font-size:15px;margin:0 0 6px}
+.profile p{font-size:11px;color:#c6e0e8;margin:0;overflow-wrap:anywhere}
+.nav{display:grid;gap:8px;margin-top:24px}
+.nav a,.logout{display:flex;align-items:center;gap:14px;text-decoration:none;color:#d8eaf0;padding:13px 14px;border-radius:12px;transition:.2s;font-size:14px}
+.nav a:hover,.nav a.active{background:#f4fbfc;color:#164e63}
+.nav-icon{width:20px;text-align:center;font-size:17px}
+.logout{margin-top:auto;background:rgba(0,0,0,.08)}
+.main{width:calc(100% - 235px);margin-left:235px;min-width:0}
+.page-heading{display:flex;justify-content:space-between;align-items:center;padding:23px 30px 8px;color:var(--accent);font-size:17px;font-weight:700}
+.year{font-weight:400}
+.page-title{text-align:center;font-size:clamp(24px,3vw,40px);margin:8px 15px 24px;color:var(--accent)}
+.topbar{margin:0 24px;background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:17px 20px;display:flex;justify-content:space-between;align-items:center;gap:15px;box-shadow:var(--shadow)}
+.welcome{font-size:21px;font-weight:700}
+.top-actions{display:flex;align-items:center;gap:10px}
+.search-wrap{position:relative}
+.search{width:210px;max-width:100%;padding:11px 38px 11px 14px;border:1px solid var(--border);border-radius:24px;background:var(--bg);color:var(--text);outline:none}
+.search-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.icon-button,.theme-toggle button{border:0;background:transparent;color:var(--text);padding:10px;font-size:18px;border-radius:10px}
+.theme-toggle{display:flex;gap:2px;background:var(--soft);border-radius:22px;padding:3px}
+.theme-toggle button{font-size:15px;padding:8px 11px}
+.theme-toggle button.selected{background:var(--accent);color:white}
+.content{padding:22px 24px}
+.page{display:none;animation:appear .18s ease}
+.page.active{display:block}
+@keyframes appear{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.section{margin-bottom:22px}
+.section-title{font-size:20px;margin:0 0 17px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:17px;padding:19px 14px;display:flex;align-items:center;gap:12px;min-width:0;box-shadow:var(--shadow)}
+.stat-icon{width:45px;height:45px;min-width:45px;border-radius:12px;background:var(--soft);display:grid;place-items:center;color:var(--accent);font-size:19px}
+.stat-icon.orange{background:rgba(183,121,69,.17);color:var(--orange)}
+.stat-info strong{display:block;font-size:23px;margin-bottom:6px;overflow-wrap:anywhere}
+.stat-info span{font-size:12px;color:var(--muted)}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:var(--shadow);min-width:0}
+.panel h3{font-size:18px;margin:0 0 20px}
+.metric{font-size:42px;font-weight:700;margin:24px 0 5px}
+.muted{color:var(--muted);font-size:13px;line-height:1.6}
+.bar-row{display:grid;grid-template-columns:minmax(65px,100px) minmax(30px,1fr) auto;align-items:center;gap:10px;margin:18px 0;font-size:12px}
+.bar-bg{height:9px;background:var(--soft);border-radius:10px;overflow:hidden}
+.bar-fill{height:100%;background:var(--accent);border-radius:10px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.toolbar h3{margin:0}
+.btn{border:0;border-radius:9px;background:var(--sidebar);color:white;padding:11px 15px;font-size:13px;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{opacity:.87}
+.btn.secondary{background:var(--soft);color:var(--text);padding:8px 11px}
+.table-wrap{width:100%;overflow-x:auto}
+table{width:100%;border-collapse:collapse;white-space:nowrap;text-align:left}
+th,td{padding:14px 12px;border-bottom:1px solid var(--border);font-size:13px}
+th{color:var(--muted);font-weight:600;background:var(--soft)}
+td{color:var(--text)}
+tbody tr:hover{background:var(--soft)}
+.status{display:inline-block;border-radius:20px;padding:6px 9px;font-size:11px;font-weight:700}
+.status.success{color:var(--green);background:rgba(22,133,104,.12)}
+.status.warning{color:var(--orange);background:rgba(183,121,69,.14)}
+.status.danger{color:var(--red);background:rgba(200,77,77,.13)}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.field{display:flex;flex-direction:column;gap:8px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:13px;font-weight:700}
+.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);outline:none}
+.field textarea{min-height:110px;resize:vertical}
+.setting-row{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:17px 0;border-bottom:1px solid var(--border)}
+.setting-row:last-child{border-bottom:0}
+.setting-row h4{margin:0 0 6px}
+.setting-row p{margin:0;color:var(--muted);font-size:13px}
+.setting-row input{width:18px;height:18px;accent-color:var(--accent)}
+.notice{padding:15px;background:var(--soft);border-radius:10px;margin-bottom:12px;font-size:13px;line-height:1.7}
+.empty-message{display:none;color:var(--muted);font-size:13px;padding:12px}
+.footer{text-align:center;padding:20px;color:var(--muted);font-size:12px}
+.mobile-menu{display:none}
+@media(max-width:1100px){
+ .sidebar{width:205px}
+ .main{width:calc(100% - 205px);margin-left:205px}
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .stat-info strong{font-size:21px}
+}
+@media(max-width:700px){
+ .sidebar{width:70px;padding:18px 8px}
+ .profile{padding:3px 0 18px}
+ .avatar{width:45px;height:45px;font-size:20px}
+ .profile h3,.profile p,.nav-text,.logout span{display:none}
+ .nav{margin-top:18px;gap:8px}
+ .nav a,.logout{justify-content:center;padding:14px 5px}
+ .nav-icon{font-size:19px}
+ .main{width:calc(100% - 70px);margin-left:70px}
+ .page-heading{padding:17px 13px 5px;font-size:13px}
+ .page-title{font-size:24px;margin:8px 5px 18px}
+ .topbar{margin:0 10px;padding:13px;align-items:flex-start;flex-direction:column}
+ .welcome{font-size:17px}
+ .top-actions{width:100%;justify-content:space-between;gap:5px;flex-wrap:wrap}
+ .search-wrap{flex:1;min-width:100px}
+ .search{width:100%}
+ .content{padding:15px 10px}
+ .stats{gap:8px}
+ .stat-card{padding:12px 9px;gap:8px;flex-direction:column;align-items:flex-start}
+ .stat-icon{width:36px;height:36px;min-width:36px;font-size:15px}
+ .stat-info strong{font-size:19px}
+ .stat-info span{font-size:11px}
+ .grid-2,.grid-3{grid-template-columns:1fr}
+ .panel{padding:16px}
+ .form-grid{grid-template-columns:1fr}
+ .field.full{grid-column:auto}
+ .toolbar{align-items:flex-start;flex-wrap:wrap}
+ th,td{padding:12px 10px}
+}
+@media print{
+ .sidebar,.top-actions,.btn{display:none!important}
+ .main{width:100%;margin:0}
+ .page{display:none!important}
+ .page.active{display:block!important}
+ body{background:white;color:black}
+ .panel,.stat-card,.topbar{box-shadow:none;break-inside:avoid}
+}
+
+.auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(135deg,#eaf4f6,#d4e9ee)}
+.auth-card{width:min(440px,100%);background:#fff;border-radius:20px;padding:34px;box-shadow:0 18px 55px rgba(19,65,79,.14);color:#183744}
+.auth-brand{text-align:center;margin-bottom:24px}.auth-brand h1{margin:0;color:#164e63;font-size:30px}.auth-brand p{color:#718792;margin:8px 0 0}
+.auth-tabs{display:flex;background:#edf7f8;padding:5px;border-radius:11px;margin-bottom:22px}.auth-tabs button{width:50%;border:0;background:transparent;padding:11px;border-radius:8px;color:#49636d;font-weight:700}.auth-tabs button.active{background:#164e63;color:#fff}
+.auth-field{margin:14px 0}.auth-field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px}.auth-field input{width:100%;padding:12px 13px;border:1px solid #dce8eb;border-radius:9px;outline:none}
+.auth-remember{display:flex;align-items:center;gap:8px;font-size:13px;color:#526a73;margin:14px 0}.auth-submit{width:100%;border:0;border-radius:10px;padding:13px;background:#164e63;color:#fff;font-weight:700}.auth-message{display:none;margin:12px 0;padding:10px;border-radius:8px;font-size:13px}.auth-message.error{display:block;background:#fff0f0;color:#a33131}.auth-foot{text-align:center;color:#718792;font-size:12px;margin-top:18px}
+
+
+
+/* StockLite authentication refresh */
+.auth-screen{min-height:100vh;padding:30px;background:#071b2b;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.auth-screen:before,.auth-screen:after{content:"";position:absolute;width:480px;height:480px;border-radius:50%;filter:blur(90px);opacity:.22;pointer-events:none}
+.auth-screen:before{background:#00d5b0;top:-230px;left:-160px}.auth-screen:after{background:#4278ff;bottom:-260px;right:-150px}
+.auth-shell{width:min(1120px,100%);min-height:680px;display:grid;grid-template-columns:1fr 1fr;background:#fff;border:1px solid rgba(255,255,255,.18);border-radius:28px;overflow:hidden;box-shadow:0 35px 100px rgba(0,0,0,.42),0 0 45px rgba(20,220,190,.12);position:relative;z-index:1}
+.auth-visual{position:relative;overflow:hidden;padding:34px 42px 25px;background:radial-gradient(circle at 75% 62%,#145d68 0,#103e52 32%,#0a263b 76%);color:#fff;display:flex;flex-direction:column;min-height:680px}
+.visual-top,.visual-bottom{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2}
+.visual-logo{font-weight:800;font-size:20px;letter-spacing:.3px}.visual-logo i{color:#4be4c2;margin-right:7px}
+.visual-pill{font-size:9px;letter-spacing:1.7px;border:1px solid rgba(255,255,255,.22);padding:8px 11px;border-radius:30px;color:#bceee6}
+.visual-copy{position:relative;z-index:2;margin-top:62px;max-width:410px}
+.eyebrow{font-size:10px;letter-spacing:2.4px;color:#58e5c4;font-weight:800}
+.visual-copy h2{font-size:clamp(36px,4vw,52px);line-height:1.12;letter-spacing:-1.7px;margin:17px 0}
+.visual-copy h2 em{font-style:normal;color:#59e4c3}.visual-copy p{max-width:340px;color:#b8d1d9;font-size:14px;line-height:1.8}
+.cart-scene{position:absolute;width:390px;height:300px;right:20px;bottom:74px;display:grid;place-items:center}
+.scene-orbit{position:absolute;border:1px solid rgba(103,238,211,.18);border-radius:50%;transform:rotate(-24deg)}
+.orbit-a{width:330px;height:180px}.orbit-b{width:260px;height:245px;transform:rotate(48deg)}
+.cart-platform{position:absolute;width:260px;height:65px;bottom:27px;border-radius:50%;background:rgba(0,0,0,.22);filter:blur(9px);border:1px solid rgba(95,238,210,.16)}
+.cart-icon{width:174px;height:174px;border-radius:42px;display:grid;place-items:center;font-size:78px;color:#73f1d0;background:linear-gradient(145deg,rgba(255,255,255,.17),rgba(255,255,255,.045));border:1px solid rgba(148,255,231,.36);box-shadow:0 0 55px rgba(41,232,192,.23),inset 0 0 35px rgba(255,255,255,.06);transform:rotate(-8deg);z-index:1}
+.floating-box{position:absolute;width:55px;height:55px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(145deg,#e4fff8,#8ae8d1);color:#0d5960;font-size:22px;box-shadow:0 12px 30px rgba(0,0,0,.22);z-index:2}
+.box-a{top:48px;left:55px;transform:rotate(-13deg)}.box-b{top:75px;right:45px;transform:rotate(12deg)}.box-c{bottom:48px;left:42px;transform:rotate(8deg)}
+.cart-spark{position:absolute;color:#8cf6dc;font-size:26px}.spark-a{top:25px;right:112px}.spark-b{bottom:65px;right:35px;font-size:38px}
+.visual-glow{position:absolute;border-radius:50%;filter:blur(40px);background:#2be0bd;opacity:.12}.glow-one{width:200px;height:200px;right:15px;top:160px}.glow-two{width:160px;height:160px;left:-70px;bottom:90px}
+.visual-bottom{margin-top:auto;font-size:10px;color:#a9c9d0}.visual-bottom i{color:#58e4c3;margin-right:6px}
+.auth-side{padding:30px clamp(25px,5vw,65px);display:flex;flex-direction:column;justify-content:center;background:linear-gradient(145deg,#fff 0%,#f8fcfc 100%);position:relative}
+.auth-tools{position:absolute;top:27px;left:clamp(25px,5vw,65px);right:clamp(25px,5vw,65px);display:flex;align-items:center;justify-content:space-between}
+.secure-label{font-size:9px;letter-spacing:1.5px;color:#8aa0a7;font-weight:800}.secure-label i{color:#18a88e;margin-right:5px}
+.language-toggle{border:1px solid #dce9e9;background:#fff;color:#176b68;padding:8px 12px;border-radius:22px;font-size:12px;font-weight:700;cursor:pointer;transition:.2s}.language-toggle:hover{border-color:#27c5a4;box-shadow:0 4px 15px #16b99b20}
+.auth-card{width:100%;max-width:400px;margin:38px auto 0;padding:12px 0}
+.auth-brand{text-align:left;margin-bottom:27px}.brand-mark{width:43px;height:43px;border-radius:14px;background:linear-gradient(135deg,#0e766e,#22c6a0);display:grid;place-items:center;color:#fff;font-size:19px;box-shadow:0 8px 20px #17aa8b38;margin-bottom:18px}
+.auth-brand h1{font-size:29px;letter-spacing:-.7px;margin:0;color:#123d4a}.auth-brand p{font-size:13px;color:#82969c;margin:8px 0 0}
+.auth-tabs{display:flex;background:#edf5f5;padding:5px;border-radius:12px;margin-bottom:24px;gap:4px}
+.auth-tabs button{width:50%;border:0;background:transparent;padding:12px 8px;border-radius:9px;color:#72868c;font-size:12px;font-weight:700;transition:.2s}
+.auth-tabs button.active{background:#fff;color:#126f68;box-shadow:0 3px 12px rgba(20,75,80,.1)}
+.auth-field{margin:16px 0}.auth-field label{display:block;font-size:11px;font-weight:800;color:#36535b;margin-bottom:8px}
+.input-wrap{position:relative;display:flex;align-items:center}.input-wrap>i:first-child{position:absolute;left:14px;color:#8ba2a6;font-size:13px;z-index:1}
+.input-wrap input{width:100%;height:48px;border:1px solid #dce8e8;border-radius:11px;background:#fbfdfd;padding:0 44px 0 40px;color:#173c45;font-size:13px;outline:none;transition:.2s}
+.input-wrap input:focus{border-color:#22b99b;box-shadow:0 0 0 4px rgba(34,185,155,.12);background:#fff}
+.input-wrap input::placeholder{color:#b1c0c2}
+.password-toggle{position:absolute;right:9px;border:0;background:transparent;color:#82999d;padding:8px;cursor:pointer}
+.auth-remember{display:flex;align-items:center;gap:9px;font-size:11px;color:#71858a;margin:17px 0 19px;cursor:pointer}
+.auth-remember input{accent-color:#159d87;width:15px;height:15px}
+.auth-submit{width:100%;height:49px;border:0;border-radius:11px;background:linear-gradient(100deg,#106f6b,#18a98d);color:#fff;font-weight:800;font-size:13px;box-shadow:0 10px 22px rgba(19,160,132,.22);transition:.2s;display:flex;align-items:center;justify-content:center;gap:12px}
+.auth-submit:hover{transform:translateY(-2px);box-shadow:0 14px 26px rgba(19,160,132,.3)}
+.auth-message{display:none;margin:10px 0;padding:10px 12px;border-radius:9px;font-size:12px}.auth-message.error{display:block;background:#fff0f0;color:#a33131}
+.auth-foot{text-align:center;color:#9aabad;font-size:10px;margin-top:24px}.auth-foot i{color:#24a98e;margin-right:5px}
+.auth-side-foot{text-align:center;color:#a6b5b8;font-size:10px;margin-top:auto;padding-top:15px}
+[dir="rtl"] .auth-side{text-align:right}[dir="rtl"] .auth-brand{text-align:right}[dir="rtl"] .auth-tools{direction:ltr}[dir="rtl"] .input-wrap>i:first-child{left:auto;right:14px}[dir="rtl"] .input-wrap input{padding:0 40px 0 44px;text-align:right}[dir="rtl"] .password-toggle{right:auto;left:9px}[dir="rtl"] .visual-copy{text-align:right;margin-left:0;margin-right:auto}[dir="rtl"] .visual-bottom{direction:rtl}[dir="rtl"] .visual-logo i,[dir="rtl"] .visual-bottom i,[dir="rtl"] .secure-label i{margin-right:0;margin-left:6px}
+@media(max-width:850px){.auth-shell{grid-template-columns: .82fr 1.18fr}.auth-visual{padding:28px 25px}.visual-copy h2{font-size:38px}.cart-scene{transform:scale(.8);transform-origin:bottom right;right:-35px}.auth-side{padding-left:30px;padding-right:30px}}
+@media(max-width:650px){.auth-screen{padding:12px;align-items:flex-start}.auth-shell{display:block;min-height:calc(100vh - 24px);border-radius:21px}.auth-visual{min-height:205px;height:205px;padding:20px 22px}.visual-copy{margin-top:24px;max-width:68%}.visual-copy h2{font-size:25px;margin:8px 0}.visual-copy p,.visual-bottom,.visual-pill{display:none}.cart-scene{width:190px;height:155px;right:-15px;bottom:0;transform:scale(.62);transform-origin:bottom right}.cart-icon{width:140px;height:140px;font-size:62px}.floating-box{width:42px;height:42px}.auth-side{padding:58px 25px 22px;min-height:550px}.auth-tools{top:18px;left:22px;right:22px}.auth-card{margin:0 auto;padding:8px 0}.auth-brand{margin-bottom:20px}.auth-brand h1{font-size:25px}.auth-field{margin:13px 0}.auth-side-foot{padding-top:10px}}
+@media(max-height:760px) and (min-width:651px){.auth-visual{min-height:620px}.auth-shell{min-height:620px}.visual-copy{margin-top:38px}.cart-scene{bottom:48px;transform:scale(.85);transform-origin:bottom right}}
+
+
+/* StockLite login recreation based on the supplied reference design */
+.auth-screen{min-height:100vh;box-sizing:border-box;padding:185px 18px 34px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 55%,#073b91 0,#061b58 46%,#020b2c 100%);color:#fff}
+.auth-screen:before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 0 42%,rgba(0,130,255,.14) 50%,transparent 60%),radial-gradient(ellipse at 8% 75%,rgba(0,179,255,.28),transparent 28%),radial-gradient(ellipse at 94% 65%,rgba(0,179,255,.22),transparent 27%);pointer-events:none}
+.login-header{position:absolute;top:22px;left:4%;right:4%;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;z-index:3;gap:20px}.login-slogan{font-family:Georgia,serif;font-style:italic;font-size:clamp(17px,2.3vw,29px);line-height:1.25;color:#fff;transform:rotate(-5deg);text-shadow:0 2px 14px #008cff}.login-brand{display:flex;align-items:center;gap:15px}.login-brand-icon{font-size:48px;color:#fff;position:relative;text-shadow:0 0 15px #00aaff}.login-brand-icon .fa-chart-column{position:absolute;font-size:30px;color:#ffd21c;top:-16px;right:-8px}.login-brand-name{font-size:clamp(39px,5.5vw,68px);font-weight:900;letter-spacing:-2px;line-height:1}.login-brand-name span{color:#ffbd12}.login-brand-sub{text-align:center;font-size:16px;font-weight:700;letter-spacing:.5px;margin-top:7px}.login-header .language-toggle{justify-self:end;border:1px solid #70baff;background:rgba(0,14,58,.72);color:#fff;border-radius:28px;padding:13px 18px;font-size:14px;box-shadow:0 0 18px #008cff;white-space:nowrap}.language-toggle b{padding:0 7px;color:#78baff}.login-card-wrap{width:min(770px,100%);box-sizing:border-box;position:relative;z-index:2;margin:25px auto 0;padding:100px 48px 28px;border:2px solid #00c8ff;border-radius:34px;background:linear-gradient(145deg,rgba(4,35,112,.96),rgba(0,16,65,.97));box-shadow:0 0 12px #00bfff,0 0 32px rgba(0,174,255,.85),inset 0 0 35px rgba(0,105,255,.22)}.login-lock{position:absolute;top:-34px;left:50%;transform:translateX(-50%);width:112px;height:112px;border-radius:50%;display:grid;place-items:center;font-size:48px;background:linear-gradient(145deg,#00bfff,#0750d7);border:3px solid #08caff;box-shadow:0 0 25px #00bfff,inset 0 0 16px rgba(255,255,255,.3)}.login-heading{text-align:center;margin-bottom:32px}.login-heading h1{font-size:clamp(24px,3vw,36px);margin:0 0 8px;font-weight:800}.login-heading p{font-size:clamp(14px,1.8vw,21px);margin:0;color:#d4e8ff}.login-card-wrap .auth-tabs{display:none}.login-card-wrap .auth-field{margin:18px 0}.login-card-wrap .input-wrap{position:relative}.login-card-wrap .input-wrap>i:first-child{left:22px;color:#fff;font-size:25px}.login-card-wrap .input-wrap input{height:76px;border:1.5px solid #38baff;border-radius:19px;background:rgba(0,12,52,.78);color:#fff;font-size:22px;padding:0 72px 0 90px;box-shadow:0 0 12px rgba(0,157,255,.2)}.login-card-wrap .input-wrap input::placeholder{color:#aabbdc}.login-card-wrap .input-wrap input:focus{border-color:#00e0ff;box-shadow:0 0 0 3px rgba(0,191,255,.2),0 0 18px #008cff}.login-card-wrap .password-toggle{right:13px;color:#fff;font-size:23px}.login-options{display:flex;justify-content:space-between;align-items:center;margin:18px 0 22px}.login-card-wrap .auth-remember{color:#fff;font-size:17px;margin:0;gap:12px}.login-card-wrap .auth-remember input{width:21px;height:21px;accent-color:#087cff}.forgot-link{color:#36d5ff;font-size:17px;font-weight:700;text-decoration:underline}.login-card-wrap .auth-submit{height:76px;border-radius:20px;background:linear-gradient(100deg,#00a9ed,#0754fa);font-size:27px;box-shadow:0 0 20px rgba(0,137,255,.55);gap:18px}.login-card-wrap .auth-submit:hover{transform:translateY(-2px);box-shadow:0 0 28px #008cff}.or-divider{display:flex;align-items:center;gap:16px;color:#fff;font-size:19px;margin:20px 0 14px}.or-divider:before,.or-divider:after{content:"";height:1px;background:linear-gradient(90deg,transparent,#b6d8ff);flex:1}.or-divider:after{background:linear-gradient(90deg,#b6d8ff,transparent)}.create-account-button{height:68px;width:100%;border:2px solid #d8eaff;border-radius:19px;background:transparent;color:#fff;font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:15px;cursor:pointer}.create-account-button:hover{background:rgba(0,145,255,.2);box-shadow:0 0 15px #008cff}.back-login{margin-top:16px}.login-card-foot{text-align:center;color:#9ccaff;font-size:12px;margin-top:18px}.login-card-foot i{margin-right:6px;color:#00d5ff}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.shop-decor{position:absolute;z-index:1;color:#55baff;filter:drop-shadow(0 0 13px #008cff);opacity:.75}.decor-cart{left:3%;bottom:10%;font-size:clamp(70px,12vw,150px);transform:rotate(-8deg)}.decor-cart span{display:block;font-size:24px;color:#ffbd22;text-align:center}.decor-store{right:2%;top:34%;font-size:clamp(75px,12vw,145px);color:#ff6b8b}.decor-chart{right:7%;bottom:12%;font-size:clamp(55px,8vw,95px);display:flex;gap:15px;color:#31c8ff}.decor-chart i:first-child{color:#d9d5ff}.decor-box{left:16%;bottom:3%;font-size:55px;color:#ffb36c}
+[dir="rtl"] .login-slogan{direction:rtl}[dir="rtl"] .login-card-wrap .input-wrap>i:first-child{left:auto;right:22px}[dir="rtl"] .login-card-wrap .input-wrap input{padding:0 90px 0 72px;text-align:right}[dir="rtl"] .login-card-wrap .password-toggle{right:auto;left:13px}[dir="rtl"] .login-options{direction:rtl}
+@media(max-width:760px){.auth-screen{padding:160px 12px 25px}.login-header{top:15px;grid-template-columns:1fr auto;gap:8px}.login-slogan{display:none}.login-brand{grid-column:1;grid-row:1}.login-brand-icon{font-size:33px}.login-brand-icon .fa-chart-column{font-size:20px}.login-brand-name{font-size:38px}.login-brand-sub{font-size:11px}.login-header .language-toggle{grid-column:2;grid-row:1;padding:10px;font-size:11px}.login-card-wrap{padding:82px 22px 24px;border-radius:25px;margin-top:15px}.login-lock{width:88px;height:88px;font-size:37px;top:-29px}.login-heading{margin-bottom:22px}.login-card-wrap .input-wrap input{height:60px;font-size:16px;padding-left:58px;padding-right:54px}.login-card-wrap .input-wrap>i:first-child{left:17px;font-size:19px}.login-card-wrap .password-toggle{font-size:18px}.login-card-wrap .auth-submit{height:61px;font-size:21px}.login-card-wrap .auth-remember,.forgot-link{font-size:13px}.create-account-button{height:58px;font-size:17px}.shop-decor{opacity:.22}.decor-cart{left:-20px;bottom:2%}.decor-store{right:-25px;top:36%}.decor-chart{right:-15px;bottom:3%}}
+@media(max-width:390px){.login-header .language-toggle{font-size:10px;padding:8px}.login-brand-name{font-size:32px}.login-card-wrap{padding-left:16px;padding-right:16px}.login-options{gap:8px}.forgot-link{font-size:12px}}
+
+/* Compact login layout: keep the same look while reducing its footprint */
+.auth-screen{padding:118px 18px 24px}
+.login-header{top:14px;gap:14px}
+.login-slogan{font-size:clamp(15px,1.8vw,23px)}
+.login-brand{gap:10px}
+.login-brand-icon{font-size:39px}
+.login-brand-icon .fa-chart-column{font-size:24px;top:-12px}
+.login-brand-name{font-size:clamp(34px,4.5vw,56px)}
+.login-brand-sub{font-size:13px;margin-top:4px}
+.login-header .language-toggle{padding:9px 14px;font-size:12px}
+.login-card-wrap{width:min(620px,100%);margin:18px auto 0;padding:76px 38px 22px;border-radius:28px}
+.login-lock{width:88px;height:88px;top:-28px;font-size:38px}
+.login-heading{margin-bottom:22px}
+.login-heading h1{font-size:clamp(22px,2.4vw,30px)}
+.login-heading p{font-size:15px}
+.login-card-wrap .auth-field{margin:13px 0}
+.login-card-wrap .input-wrap>i:first-child{left:18px;font-size:20px}
+.login-card-wrap .input-wrap input{height:59px;border-radius:14px;font-size:17px;padding:0 58px 0 62px}
+.login-card-wrap .password-toggle{right:10px;font-size:19px}
+.login-options{margin:13px 0 16px}
+.login-card-wrap .auth-remember{font-size:14px;gap:9px}
+.login-card-wrap .auth-remember input{width:17px;height:17px}
+.forgot-link{font-size:14px}
+.login-card-wrap .auth-submit{height:59px;border-radius:14px;font-size:21px;gap:12px}
+.or-divider{font-size:15px;margin:14px 0 10px}
+.create-account-button{height:54px;border-radius:14px;font-size:17px;gap:11px}
+.login-card-foot{margin-top:12px}
+[dir="rtl"] .login-card-wrap .input-wrap>i:first-child{right:18px}
+[dir="rtl"] .login-card-wrap .input-wrap input{padding:0 62px 0 58px}
+[dir="rtl"] .login-card-wrap .password-toggle{left:10px}
+@media(max-width:760px){
+ .auth-screen{padding:112px 12px 20px}
+ .login-header{top:12px}
+ .login-card-wrap{width:min(540px,100%);padding:68px 22px 20px;margin-top:12px}
+ .login-lock{width:76px;height:76px;top:-25px;font-size:32px}
+ .login-heading{margin-bottom:18px}
+ .login-card-wrap .input-wrap input{height:54px;font-size:15px}
+ .login-card-wrap .auth-submit{height:54px;font-size:18px}
+ .create-account-button{height:50px;font-size:16px}
+}
+@media(max-width:390px){.auth-screen{padding-top:104px}.login-card-wrap{padding:64px 16px 18px}.login-heading h1{font-size:21px}.login-options{margin:11px 0 13px}}
+</style>
+</head>
+<body>
+<section class="auth-screen" id="authScreen">
+  <header class="login-header">
+    <div class="login-slogan" data-en="Smart Inventory...<br>Better Business..." data-ar="مخزون أذكى...<br>تجارة أفضل...">Smart Inventory...<br>Better Business...</div>
+    <div class="login-brand"><div class="login-brand-icon"><i class="fa-solid fa-cart-shopping"></i><i class="fa-solid fa-chart-column"></i></div><div><div class="login-brand-name">Stock<span>Lite</span></div><div class="login-brand-sub" data-en="Inventory · Sales · Reports" data-ar="المخزون · المبيعات · التقارير">Inventory · Sales · Reports</div></div></div>
+    <button type="button" class="language-toggle" id="languageToggle"><i class="fa-solid fa-globe"></i> 🇪🇬 العربية <b>|</b> 🇬🇧 English</button>
+  </header>
+  <div class="shop-decor decor-cart"><i class="fa-solid fa-cart-shopping"></i><span>▰ ▰</span></div>
+  <div class="shop-decor decor-store"><i class="fa-solid fa-store"></i></div>
+  <div class="shop-decor decor-chart"><i class="fa-solid fa-clipboard-check"></i><i class="fa-solid fa-chart-line"></i></div>
+  <div class="shop-decor decor-box"><i class="fa-solid fa-box-open"></i></div>
+  <div class="login-card-wrap">
+    <div class="login-lock"><i class="fa-solid fa-user-lock"></i></div>
+    <div class="login-heading"><h1 data-en="Login to Your Account" data-ar="تسجيل الدخول إلى حسابك">Login to Your Account</h1><p data-en="Access your store and manage your business" data-ar="ادخل إلى متجرك وأدر أعمالك بسهولة">Access your store and manage your business</p></div>
+    <div class="auth-tabs"><button type="button" id="loginTab" class="active">Login</button><button type="button" id="registerTab">Register</button></div>
+    <form id="loginForm">
+      <div class="auth-field"><label class="sr-only" for="loginEmail">Email Address</label><div class="input-wrap"><i class="fa-solid fa-envelope"></i><input id="loginEmail" type="email" autocomplete="username" placeholder="Email Address" required></div></div>
+      <div class="auth-field"><label class="sr-only" for="loginPassword">Password</label><div class="input-wrap"><i class="fa-solid fa-lock"></i><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password" required><button class="password-toggle" type="button" data-target="loginPassword" aria-label="Show password"><i class="fa-regular fa-eye-slash"></i></button></div></div>
+      <div class="login-options"><label class="auth-remember"><input type="checkbox" id="loginRemember"><span data-en="Remember Me" data-ar="تذكرني">Remember Me</span></label><a href="#" class="forgot-link" id="forgotLink" data-en="Forgot Password?" data-ar="نسيت كلمة المرور؟">Forgot Password?</a></div>
+      <div class="auth-message" id="loginMessage"></div><button class="auth-submit"><i class="fa-solid fa-arrow-right-to-bracket"></i><span data-en="Login" data-ar="دخول">Login</span></button>
+      <div class="or-divider"><span data-en="OR" data-ar="أو">OR</span></div><button type="button" class="create-account-button" id="switchToRegister"><i class="fa-solid fa-user-plus"></i><span data-en="Create New Account" data-ar="إنشاء حساب جديد">Create New Account</span></button>
+    </form>
+    <form id="registerForm" hidden>
+      <div class="auth-field"><label class="sr-only" for="registerName">Full Name</label><div class="input-wrap"><i class="fa-solid fa-user"></i><input id="registerName" required maxlength="100" placeholder="Full Name"></div></div>
+      <div class="auth-field"><label class="sr-only" for="registerEmail">Email Address</label><div class="input-wrap"><i class="fa-solid fa-envelope"></i><input id="registerEmail" type="email" required placeholder="Email Address"></div></div>
+      <div class="auth-field"><label class="sr-only" for="registerPassword">Password</label><div class="input-wrap"><i class="fa-solid fa-lock"></i><input id="registerPassword" type="password" minlength="8" required placeholder="Password (at least 8 characters)"><button class="password-toggle" type="button" data-target="registerPassword" aria-label="Show password"><i class="fa-regular fa-eye-slash"></i></button></div></div>
+      <div class="auth-field"><label class="sr-only" for="registerConfirm">Confirm Password</label><div class="input-wrap"><i class="fa-solid fa-shield-halved"></i><input id="registerConfirm" type="password" minlength="8" required placeholder="Confirm Password"><button class="password-toggle" type="button" data-target="registerConfirm" aria-label="Show password"><i class="fa-regular fa-eye-slash"></i></button></div></div>
+      <label class="auth-remember"><input type="checkbox" id="registerRemember"><span data-en="Remember Me" data-ar="تذكرني">Remember Me</span></label><div class="auth-message" id="registerMessage"></div><button class="auth-submit"><i class="fa-solid fa-user-plus"></i><span data-en="Create Account" data-ar="إنشاء الحساب">Create Account</span></button>
+      <button type="button" class="create-account-button back-login" id="switchToLogin" data-en="Back to Login" data-ar="العودة لتسجيل الدخول">Back to Login</button>
+    </form>
+    <div class="login-card-foot"><i class="fa-solid fa-shield-halved"></i> StockLite · <span data-en="Secure store management" data-ar="إدارة آمنة لمتجرك">Secure store management</span></div>
+  </div>
+</section>
+<div class="app">
+<aside class="sidebar">
+  <div class="profile">
+    <div class="avatar"><i class="fa-solid fa-user"></i></div>
+    <h3 id="accountName">Account</h3>
+    <p id="accountEmail"></p>
+  </div>
+  <nav class="nav" id="navigation">
+    <a href="#dashboard" data-page="dashboard" class="active"><i class="fa-solid fa-table-columns nav-icon"></i><span class="nav-text">Dashboard</span></a>
+    <a href="#inventory" data-page="inventory"><i class="fa-solid fa-boxes-stacked nav-icon"></i><span class="nav-text">Inventory</span></a>
+    <a href="#orders" data-page="orders"><i class="fa-solid fa-clipboard-list nav-icon"></i><span class="nav-text">Sales</span></a>
+    <a href="#purchase" data-page="purchase"><i class="fa-solid fa-cart-shopping nav-icon"></i><span class="nav-text">Purchase</span></a>
+    <a href="#reporting" data-page="reporting"><i class="fa-solid fa-chart-column nav-icon"></i><span class="nav-text">Reporting</span></a>
+    <a href="#support" data-page="support"><i class="fa-solid fa-headset nav-icon"></i><span class="nav-text">Support</span></a>
+    <a href="#settings" data-page="settings"><i class="fa-solid fa-gear nav-icon"></i><span class="nav-text">Settings</span></a>
+  </nav>
+  <a href="#logout" class="logout" id="logoutButton"><i class="fa-solid fa-right-from-bracket nav-icon"></i><span>Logout</span></a>
+</aside>
+
+<main class="main">
+  <div class="page-heading"><span id="headingName">Dashboard</span><span class="year" id="currentYear"></span></div>
+  <h1 class="page-title">Inventory Management</h1>
+
+  <header class="topbar">
+    <div class="welcome" id="welcomeText">Welcome, Store Manager!</div>
+    <div class="top-actions">
+      <div class="search-wrap">
+        <input class="search" id="globalSearch" placeholder="Search this page..." aria-label="Search this page">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+      </div>
+      <div class="theme-toggle">
+        <button id="lightMode" aria-label="Light mode"><i class="fa-solid fa-sun"></i></button>
+        <button id="darkMode" aria-label="Dark mode"><i class="fa-solid fa-moon"></i></button>
+      </div>
+      <button class="icon-button" id="notifications" aria-label="Notifications"><i class="fa-regular fa-bell"></i></button>
+    </div>
+  </header>
+
+  <div class="content">
+    <section class="page active" id="page-dashboard">
+      <section class="section">
+        <h2 class="section-title">Overview</h2>
+        <div class="stats">
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-box"></i></div><div class="stat-info"><strong id="dashProducts">0</strong><span>Total Products</span></div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-receipt"></i></div><div class="stat-info"><strong id="dashOrders">0</strong><span>Total Orders</span></div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div><div class="stat-info"><strong id="dashStock">0</strong><span>Total Stock Units</span></div></div>
+          <div class="stat-card"><div class="stat-icon orange"><i class="fa-solid fa-box-open"></i></div><div class="stat-info"><strong id="dashOutStock">0</strong><span>Out of Stock</span></div></div>
+        </div>
+      </section>
+      <section class="section grid-2">
+        <div class="panel"><h3>Total Revenue</h3><div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div><div class="metric" id="dashRevenue">EGP 0.00</div><p class="muted">Total recorded sales</p></div>
+        <div class="panel"><h3>Inventory Value</h3><div class="stat-icon"><i class="fa-solid fa-warehouse"></i></div><div class="metric" id="dashInventoryValue">EGP 0.00</div><p class="muted">Current quantity أ— selling price</p></div>
+      </section>
+      <section class="section grid-2">
+        <div class="panel"><h3>Sales Overview</h3><div class="bar-row"><span>Total Sold Units</span><div class="bar-bg"><div class="bar-fill" id="dashSoldBar" style="width:0%"></div></div><strong id="dashSold">0</strong></div><p class="muted">Units sold across recorded sales</p></div>
+        <div class="panel"><h3>Stock Overview</h3><div class="bar-row"><span>Available Units</span><div class="bar-bg"><div class="bar-fill" id="dashAvailableBar" style="width:0%"></div></div><strong id="dashAvailablePercent">0%</strong></div><p class="muted">Share of available units compared with sold + available units</p></div>
+      </section>
+      <section class="section panel">
+        <div class="toolbar"><h3>Recent Inventory</h3><button class="btn" data-go="inventory">View Inventory <i class="fa-solid fa-arrow-right"></i></button></div>
+        <div class="table-wrap"><table><thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Price</th><th>Status</th></tr></thead><tbody id="dashboardRecentRows"><tr><td colspan="5">Loading products...</td></tr></tbody></table></div>
+      </section>
+    </section>
+
+    <section class="page" id="page-inventory">
+      <section class="section stats">
+        <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-box"></i></div><div class="stat-info"><strong>248</strong><span>Total Products</span></div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-boxes-stacked"></i></div><div class="stat-info"><strong>5,483</strong><span>Units in Stock</span></div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="stat-info"><strong>12</strong><span>Low Stock</span></div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="fa-solid fa-box-open"></i></div><div class="stat-info"><strong>4</strong><span>Out of Stock</span></div></div>
+      </section>
+      <section class="section panel">
+        <div class="toolbar"><h3>All Products</h3><button class="btn" data-go="addProduct"><i class="fa-solid fa-plus"></i> Add Product</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Product Name</th><th>SKU</th><th>Category</th><th>Quantity</th><th>Unit Price</th><th>Status</th><th>Action</th></tr></thead><tbody id="inventoryRows"><tr><td colspan="7">Loading products...</td></tr></tbody></table></div><p class="empty-message">No matching products found.</p>
+      </section>
+      <section class="section panel" id="addProduct">
+        <h3>Add New Product</h3>
+        <form class="form-grid" id="addProductForm">
+          <div class="field"><label>Product Name</label><input name="product" required placeholder="Enter product name"></div>
+          <div class="field"><label>Category</label><select name="category" required><option value="Electronics" selected>Electronics</option><option>Food</option><option>Beverages</option><option>Dairy</option><option>Household</option></select></div>
+          <div class="field"><label>Quantity</label><input name="quantity" type="number" min="0" required></div>
+          <div class="field"><label>Unit Price (EGP)</label><input name="price" type="number" min="0" step=".01" required></div>
+          <div class="field full"><button class="btn" type="submit">Save Product</button></div>
+        </form>
+      </section>
+      <section class="section panel">
+        <div class="toolbar"><h3>Stock Movements</h3><button class="btn secondary" id="refreshMovements"><i class="fa-solid fa-rotate"></i> Refresh</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Movement ID</th><th>Date</th><th>Product</th><th>Type</th><th>Quantity Change</th><th>Reference</th><th>Notes</th></tr></thead><tbody id="movementRows"><tr><td colspan="7">Loading movements...</td></tr></tbody></table></div>
+      </section>
+    </section>
+
+    <section class="page" id="page-orders">
+      <section class="section stats">
+        <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-receipt"></i></div><div class="stat-info"><strong id="orderCount">0</strong><span>Recorded Sales</span></div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-sack-dollar"></i></div><div class="stat-info"><strong id="salesRevenue">EGP 0.00</strong><span>Total Revenue</span></div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-boxes-stacked"></i></div><div class="stat-info"><strong id="salesUnits">0</strong><span>Units Sold</span></div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="fa-solid fa-credit-card"></i></div><div class="stat-info"><strong id="lastPayment">â€”</strong><span>Latest Payment</span></div></div>
+      </section>
+      <section class="section panel">
+        <div class="toolbar"><h3>Sales History</h3><button class="btn secondary" id="refreshSales"><i class="fa-solid fa-rotate"></i> Refresh</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Sale ID</th><th>Date</th><th>Product</th><th>Quantity</th><th>Unit Price</th><th>Total</th><th>Payment</th></tr></thead><tbody id="orderRows"><tr><td colspan="7">Loading sales...</td></tr></tbody></table></div>
+        <p class="empty-message" id="salesEmpty">No sales have been recorded yet.</p>
+      </section>
+      <section class="section panel" id="createOrder">
+        <h3>Record a Sale</h3>
+        <p class="muted">Recording a sale deducts the sold quantity from inventory and creates a stock movement.</p>
+        <form class="form-grid" id="saleForm">
+          <div class="field full"><label for="saleProduct">Product</label><select name="product_id" id="saleProduct" required><option value="">Loading products...</option></select></div>
+          <div class="field"><label for="saleQuantity">Quantity</label><input id="saleQuantity" name="quantity" type="number" min="1" step="1" value="1" required></div>
+          <div class="field"><label for="salePayment">Payment Method</label><select id="salePayment" name="payment_method" required><option>Cash</option><option>Card</option><option>Wallet</option></select></div>
+          <div class="field full"><button class="btn" id="submitSale" type="submit"><i class="fa-solid fa-check"></i> Record Sale</button></div>
+        </form>
+        <p class="notice" id="saleMessage" role="status" aria-live="polite" style="display:none"></p>
+      </section>
+    </section>
+
+    <section class="page" id="page-purchase">
+      <section class="section stats">
+        <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-truck"></i></div><div class="stat-info"><strong id="purchaseSuppliers">0</strong><span>Total Suppliers</span></div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-file-invoice"></i></div><div class="stat-info"><strong id="purchaseCount">0</strong><span>Purchase Orders</span></div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="fa-solid fa-hourglass-half"></i></div><div class="stat-info"><strong>0</strong><span>Pending Deliveries</span></div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div><div class="stat-info"><strong id="purchaseTotal">EGP 0.00</strong><span>Total Purchases</span></div></div>
+      </section>
+      <section class="section panel">
+        <div class="toolbar"><h3>Purchase Orders</h3><button class="btn secondary" id="refreshPurchases"><i class="fa-solid fa-rotate"></i> Refresh</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Purchase ID</th><th>Supplier</th><th>Order Date</th><th>Product</th><th>Quantity</th><th>Unit Cost</th><th>Total</th><th>Status</th></tr></thead><tbody id="purchaseRows"><tr><td colspan="8">Loading purchases...</td></tr></tbody></table></div>
+        <p class="empty-message" id="purchasesEmpty">No purchases recorded yet.</p>
+      </section>
+      <section class="section panel" id="newPurchase">
+        <h3>Create Purchase Order</h3>
+        <p class="muted">Recording a purchase adds the received quantity to inventory and creates a stock movement.</p>
+        <form class="form-grid" id="purchaseForm">
+          <div class="field"><label for="purchaseSupplier">Supplier Name</label><input id="purchaseSupplier" name="supplier_name" required placeholder="Enter supplier name"></div>
+          <div class="field"><label for="purchaseProduct">Product</label><select id="purchaseProduct" name="product_id" required><option value="">Load products first...</option></select></div>
+          <div class="field"><label for="purchaseQuantity">Quantity</label><input id="purchaseQuantity" name="quantity" type="number" min="1" step="1" required></div>
+          <div class="field"><label for="purchaseCost">Unit Cost (EGP)</label><input id="purchaseCost" name="unit_cost" type="number" min="0" step="0.01" required placeholder="Auto-filled from last purchase"></div>
+          <div class="field"><label for="purchaseTotal">Total Purchase Cost (EGP)</label><input id="purchaseTotal" type="text" value="EGP 0.00" readonly></div>
+          <div class="field full"><label for="purchaseNotes">Notes (optional)</label><textarea id="purchaseNotes" name="notes" placeholder="Additional purchase details"></textarea></div>
+          <div class="field full"><button class="btn" id="submitPurchase" type="submit"><i class="fa-solid fa-check"></i> Submit Purchase Order</button></div>
+        </form>
+        <p class="notice" id="purchaseMessage" role="status" aria-live="polite" style="display:none"></p>
+      </section>
+    </section>
+
+    <section class="page" id="page-reporting">
+      <section class="section stats">
+        <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-sack-dollar"></i></div><div class="stat-info"><strong id="reportRevenue">EGP 0.00</strong><span>Total Revenue</span></div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div><div class="stat-info"><strong id="reportProfit">EGP 0.00</strong><span>Net Profit</span></div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-receipt"></i></div><div class="stat-info"><strong id="reportMonthlySales">0</strong><span>Sales This Month</span></div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="fa-solid fa-arrow-trend-down"></i></div><div class="stat-info"><strong id="reportCost">EGP 0.00</strong><span>Cost of Goods Sold</span></div></div>
+      </section>
+      <section class="section grid-2">
+        <div class="panel"><h3>Monthly Revenue</h3><div id="monthlyRevenueRows"><p class="muted">Loading monthly revenue...</p></div></div>
+        <div class="panel"><h3>Revenue, Cost & Gross Profit</h3><div id="profitInformation" class="notice">Gross profit = sales revenue âˆ’ recorded purchase cost. This is gross profit, not net profit; operating expenses are not included.</div><p id="missingCostInfo" class="muted"></p></div>
+      </section>
+      <section class="section panel">
+        <div class="toolbar"><h3>Sales Summary</h3><button class="btn" id="printReport"><i class="fa-solid fa-print"></i> Print Report</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Period</th><th>Orders</th><th>Revenue</th><th>Cost of Goods Sold</th><th>Gross Profit</th></tr></thead><tbody id="reportSummaryRows"><tr><td colspan="5">Loading report...</td></tr></tbody></table></div>
+      </section>
+    </section>
+
+    <section class="page" id="page-support">
+      <section class="section grid-3">
+        <div class="panel"><div class="stat-icon"><i class="fa-solid fa-book"></i></div><h3 style="margin-top:15px">User Guide</h3><p class="muted">Learn how to manage products, orders, and suppliers.</p></div>
+        <div class="panel"><div class="stat-icon"><i class="fa-solid fa-circle-question"></i></div><h3 style="margin-top:15px">FAQs</h3><p class="muted">Find answers to common questions about StockLite.</p></div>
+        <div class="panel"><div class="stat-icon"><i class="fa-solid fa-headset"></i></div><h3 style="margin-top:15px">Contact Support</h3><p class="muted">Send a message to the support team.</p></div>
+      </section>
+      <section class="section panel">
+        <h3>Frequently Asked Questions</h3>
+        <div class="notice"><strong>How do I add a product?</strong><br>Open Inventory and complete the Add New Product form.</div>
+        <div class="notice"><strong>How do I track an order?</strong><br>Open Orders to review order details and status.</div>
+        <div class="notice"><strong>Can I print a report?</strong><br>Open Reporting and select Print Report.</div>
+        <div class="notice"><strong>Does StockLite save data?</strong><br>Products, sales, and stock movements are saved in the StockLite database when the backend is running.</div>
+      </section>
+      <section class="section panel">
+        <h3>Contact Support</h3>
+        <form class="form-grid demo-form"><div class="field"><label>Your Name</label><input required placeholder="Enter your name"></div><div class="field"><label>Email Address</label><input type="email" required placeholder="name@example.com"></div><div class="field full"><label>Subject</label><input required placeholder="What do you need help with?"></div><div class="field full"><label>Message</label><textarea required placeholder="Describe your issue..."></textarea></div><div class="field full"><button class="btn" type="submit">Send Message</button></div></form>
+      </section>
+    </section>
+
+    <section class="page" id="page-settings">
+      <section class="section panel">
+        <h3>Profile Settings</h3>
+        <form class="form-grid demo-form"><div class="field"><label>Full Name</label><input value="Store Manager" required></div><div class="field"><label>Email Address</label><input type="email" value="manager@stocklite.com" required></div><div class="field"><label>Phone Number</label><input type="tel" placeholder="Enter phone number"></div><div class="field"><label>Role</label><input value="Administrator" disabled></div><div class="field full"><button class="btn" type="submit">Save Profile</button></div></form>
+      </section>
+      <section class="section panel">
+        <h3>Preferences</h3>
+        <div class="setting-row"><div><h4>Dark Mode</h4><p>Switch between light and dark appearance.</p></div><input type="checkbox" id="darkPreference" aria-label="Enable dark mode"></div>
+        <div class="setting-row"><div><h4>Email Notifications</h4><p>Receive updates about orders and inventory.</p></div><input type="checkbox" checked aria-label="Email notifications"></div>
+        <div class="setting-row"><div><h4>Low Stock Alerts</h4><p>Highlight products that need restocking.</p></div><input type="checkbox" checked aria-label="Low stock alerts"></div>
+      </section>
+      <section class="section panel">
+        <h3>Store Information</h3>
+        <form class="form-grid demo-form"><div class="field"><label>Store Name</label><input value="StockLite Store" required></div><div class="field"><label>Currency</label><select><option>EGP - Egyptian Pound</option><option>USD - US Dollar</option><option>EUR - Euro</option></select></div><div class="field"><label>Low Stock Threshold</label><input type="number" min="0" value="10"></div><div class="field"><label>Date Format</label><select><option>YYYY-MM-DD</option><option>DD/MM/YYYY</option><option>MM/DD/YYYY</option></select></div><div class="field full"><button class="btn" type="submit">Save Settings</button></div></form>
+      </section>
+    </section>
+  </div>
+  <footer class="footer">StockLite Inventory Management</footer>
+</main>
+</div>
+
+<script>
+const pageNames = {
+  dashboard:"Dashboard",
+  inventory:"Inventory",
+  orders:"Sales",
+  purchase:"Purchase",
+  reporting:"Reporting",
+  support:"Support",
+  settings:"Settings"
+};
+
+function showPage(name) {
+  if (!pageNames[name]) name = "dashboard";
+  document.querySelectorAll(".page").forEach(page => {
+    page.classList.toggle("active", page.id === "page-" + name);
+  });
+  document.querySelectorAll(".nav a[data-page]").forEach(link => {
+    link.classList.toggle("active", link.dataset.page === name);
+  });
+  document.getElementById("headingName").textContent = pageNames[name];
+  document.getElementById("welcomeText").textContent =
+    name === "dashboard" ? "Welcome, Store Manager!" : pageNames[name] + " Management";
+  document.getElementById("globalSearch").value = "";
+  filterCurrentPage("");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+document.querySelectorAll(".nav a[data-page]").forEach(link => {
+  link.addEventListener("click", event => {
+    event.preventDefault();
+    history.replaceState(null,"","#"+link.dataset.page);
+    showPage(link.dataset.page);
+    if (link.dataset.page === "reporting") loadReports();
+    if (link.dataset.page === "purchase") loadPurchases();
+  });
+});
+
+document.querySelectorAll("[data-go]").forEach(button => {
+  button.addEventListener("click", () => {
+    const target = document.getElementById(button.dataset.go);
+    if (target) {
+      target.scrollIntoView({behavior:"smooth",block:"start"});
+      if (button.dataset.go === "addProduct") document.querySelector('#page-inventory input[name="product"]').focus();
+    }
+  });
+});
+
+function applyTheme(theme) {
+  document.body.classList.toggle("dark",theme==="dark");
+  document.getElementById("darkMode").classList.toggle("selected",theme==="dark");
+  document.getElementById("lightMode").classList.toggle("selected",theme!=="dark");
+  document.getElementById("darkPreference").checked = theme==="dark";
+  try { localStorage.setItem("stocklite-theme",theme); } catch(e) {}
+}
+
+document.getElementById("darkMode").addEventListener("click",()=>applyTheme("dark"));
+document.getElementById("lightMode").addEventListener("click",()=>applyTheme("light"));
+document.getElementById("darkPreference").addEventListener("change",event=>applyTheme(event.target.checked?"dark":"light"));
+
+try {
+  applyTheme(localStorage.getItem("stocklite-theme") || "light");
+} catch(e) {
+  applyTheme("light");
+}
+
+document.getElementById("currentYear").textContent = new Date().getFullYear();
+
+function filterCurrentPage(query) {
+  const page = document.querySelector(".page.active");
+  if (!page) return;
+  const tables = page.querySelectorAll("table");
+  tables.forEach(table => {
+    let visible = 0;
+    table.querySelectorAll("tbody tr").forEach(row => {
+      const matches = row.textContent.toLowerCase().includes(query.toLowerCase());
+      row.style.display = matches ? "" : "none";
+      if(matches) visible++;
+    });
+    const wrapper = table.closest(".table-wrap");
+    const empty = wrapper ? wrapper.parentElement.querySelector(".empty-message") : null;
+    if(empty) empty.style.display = visible ? "none" : "block";
+  });
+}
+
+document.getElementById("globalSearch").addEventListener("input",event=>filterCurrentPage(event.target.value));
+
+document.getElementById("notifications").addEventListener("click",()=>{
+  alert("You are all caught up. No new notifications.");
+});
+
+document.getElementById("logoutButton").addEventListener("click",async event=>{event.preventDefault();await fetch('/logout',{method:'POST',credentials:'same-origin'});location.reload();});
+
+document.getElementById("printReport").addEventListener("click",()=>window.print());
+
+const API_BASE = "";
+let cachedProducts = [];
+
+function money(value) {
+  return "EGP " + Number(value || 0).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;", "'":"&#39;"}[char]));
+}
+
+function stockStatus(quantity) {
+  if (quantity === 0) return '<span class="status danger">Out of Stock</span>';
+  if (quantity <= 5) return '<span class="status danger">Critical</span>';
+  if (quantity <= 10) return '<span class="status warning">Low Stock</span>';
+  return '<span class="status success">In Stock</span>';
+}
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(API_BASE + path, {
+    ...options, credentials:"same-origin",
+    headers: {"Content-Type":"application/json", ...(options.headers || {})}
+  });
+  let body;
+  try { body = await response.json(); }
+  catch (_) { body = {}; }
+  if (response.status === 401) { showAuthScreen(); throw new Error("Please log in to continue."); }
+  if (!response.ok) throw new Error(body.message || `Request failed (${response.status})`);
+  return body;
+}
+
+function formatMonth(monthKey) {
+  const [year, month] = monthKey.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
+
+async function loadPurchases() {
+  const tbody = document.getElementById("purchaseRows");
+  const empty = document.getElementById("purchasesEmpty");
+  try {
+    const result = await apiRequest("/purchases");
+    const purchases = result.purchases || [];
+    tbody.innerHTML = "";
+    if (!purchases.length) {
+      tbody.innerHTML = '<tr><td colspan="8">No purchases recorded yet.</td></tr>';
+      if (empty) empty.style.display = "block";
+    } else {
+      if (empty) empty.style.display = "none";
+      purchases.forEach(purchase => {
+        const row = document.createElement("tr");
+        const date = purchase.purchase_date ? new Date(String(purchase.purchase_date).replace(" ", "T")).toLocaleString() : "â€”";
+        const values = ["PUR-" + purchase.purchase_id, purchase.supplier_name, date, purchase.product_name, purchase.quantity, money(purchase.unit_cost), money(Number(purchase.quantity) * Number(purchase.unit_cost))];
+        values.forEach(value => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          row.appendChild(cell);
+        });
+        const statusCell = document.createElement("td");
+        statusCell.innerHTML = '<span class="status success">Received</span>';
+        row.appendChild(statusCell);
+        tbody.appendChild(row);
+      });
+    }
+
+    // The API returns one row per purchase item; count and sum each purchase only once.
+    const purchaseTotals = new Map();
+    const suppliers = new Set();
+    purchases.forEach(item => {
+      purchaseTotals.set(item.purchase_id, Number(item.total_amount || 0));
+      suppliers.add(item.supplier_name);
+    });
+    document.getElementById("purchaseSuppliers").textContent = suppliers.size;
+    document.getElementById("purchaseCount").textContent = purchaseTotals.size;
+    document.getElementById("purchaseTotal").textContent = money([...purchaseTotals.values()].reduce((sum, value) => sum + value, 0));
+  } catch (error) {
+    console.error("Purchases loading error:", error);
+    tbody.innerHTML = `<tr><td colspan="8">Could not load purchases: ${escapeHtml(error.message)}</td></tr>`;
+  }
+}
+
+function showPurchaseMessage(message, isError = false) {
+  const element = document.getElementById("purchaseMessage");
+  element.textContent = message;
+  element.style.display = "block";
+  element.style.border = isError ? "1px solid var(--red)" : "1px solid var(--green)";
+}
+
+async function loadReports() {
+  const rows = document.getElementById("reportSummaryRows");
+  const monthlyRows = document.getElementById("monthlyRevenueRows");
+  try {
+    const data = await apiRequest("/reports/stats");
+    document.getElementById("reportRevenue").textContent = money(data.total_revenue);
+    document.getElementById("reportProfit").textContent = money(data.gross_profit);
+    document.getElementById("reportCost").textContent = money(data.total_cost);
+    document.getElementById("reportMonthlySales").textContent = Number(data.monthly_sales || 0).toLocaleString();
+    document.getElementById("missingCostInfo").textContent =
+      Number(data.units_without_cost || 0) > 0
+        ? `${data.units_without_cost} sold unit(s) have no saved purchase cost. Their profit is excluded until cost is recorded; old sales cannot be reconstructed reliably.`
+        : "All recorded sold units have a purchase cost saved.";
+
+    rows.innerHTML = "";
+    monthlyRows.innerHTML = "";
+    const months = Array.isArray(data.monthly_data) ? data.monthly_data : [];
+    if (!months.length) {
+      rows.innerHTML = '<tr><td colspan="5">No sales recorded yet.</td></tr>';
+      monthlyRows.innerHTML = '<p class="muted">No monthly sales data yet.</p>';
+      return;
+    }
+    months.forEach(item => {
+      const profit = Number(item.profit || 0);
+      const row = document.createElement("tr");
+      [formatMonth(item.month), item.orders, money(item.revenue), money(item.cost), money(profit)]
+        .forEach(value => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          row.appendChild(cell);
+        });
+      rows.appendChild(row);
+
+      const line = document.createElement("div");
+      line.className = "report-month-row";
+      line.style.cssText = "display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);";
+      const label = document.createElement("span");
+      label.textContent = formatMonth(item.month);
+      const values = document.createElement("strong");
+      values.textContent = `Revenue ${money(item.revenue)} آ· Cost ${money(item.cost)} آ· Profit ${money(profit)}`;
+      line.append(label, values);
+      monthlyRows.appendChild(line);
+    });
+  } catch (error) {
+    console.error("Reports loading error:", error);
+    rows.innerHTML = `<tr><td colspan="5">Could not load report: ${escapeHtml(error.message)}</td></tr>`;
+    monthlyRows.innerHTML = `<p class="muted">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+async function loadDashboard() {
+  const tbody = document.getElementById("dashboardRecentRows");
+  try {
+    const data = await apiRequest("/dashboard/stats");
+    if (!data.success) throw new Error(data.message || "Dashboard data unavailable");
+
+    document.getElementById("dashProducts").textContent = Number(data.total_products || 0).toLocaleString();
+    document.getElementById("dashOrders").textContent = Number(data.total_orders || 0).toLocaleString();
+    document.getElementById("dashStock").textContent = Number(data.total_stock || 0).toLocaleString();
+    document.getElementById("dashOutStock").textContent = Number(data.out_of_stock || 0).toLocaleString();
+    document.getElementById("dashRevenue").textContent = money(data.total_revenue);
+    document.getElementById("dashInventoryValue").textContent = money(data.inventory_value);
+    document.getElementById("dashSold").textContent = Number(data.total_sold || 0).toLocaleString();
+
+    const sold = Number(data.total_sold || 0);
+    const available = Number(data.total_stock || 0);
+    const combined = sold + available;
+    const soldPercent = combined ? (sold / combined) * 100 : 0;
+    const availablePercent = combined ? (available / combined) * 100 : 0;
+    document.getElementById("dashSoldBar").style.width = soldPercent + "%";
+    document.getElementById("dashAvailableBar").style.width = availablePercent + "%";
+    document.getElementById("dashAvailablePercent").textContent = Math.round(availablePercent) + "%";
+
+    const products = Array.isArray(data.recent_products) ? data.recent_products : [];
+    tbody.innerHTML = "";
+    if (!products.length) {
+      tbody.innerHTML = '<tr><td colspan="5">No products found.</td></tr>';
+      return;
+    }
+    products.forEach(product => {
+      const row = document.createElement("tr");
+      [product.name, product.category || "â€”", product.quantity, money(product.price)].forEach(value => {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.appendChild(cell);
+      });
+      const status = document.createElement("td");
+      status.innerHTML = stockStatus(Number(product.quantity));
+      row.appendChild(status);
+      tbody.appendChild(row);
+    });
+  } catch (error) {
+    console.error("Dashboard loading error:", error);
+    tbody.innerHTML = `<tr><td colspan="5">Could not load dashboard: ${escapeHtml(error.message)}</td></tr>`;
+  }
+}
+
+async function loadProducts() {
+  const tbody = document.getElementById("inventoryRows");
+  const select = document.getElementById("saleProduct");
+  try {
+    cachedProducts = await apiRequest("/products");
+    if (!Array.isArray(cachedProducts)) throw new Error("Unexpected products response");
+
+    tbody.innerHTML = "";
+    if (!cachedProducts.length) {
+      tbody.innerHTML = '<tr><td colspan="7">No products found. Add your first product below.</td></tr>';
+    } else {
+      cachedProducts.forEach(product => {
+        const row = document.createElement("tr");
+        const values = [product.name, "PR-" + String(product.id).padStart(4,"0"), product.category || "â€”", product.quantity, money(product.price)];
+        values.forEach(value => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          row.appendChild(cell);
+        });
+        const statusCell = document.createElement("td");
+        statusCell.innerHTML = stockStatus(Number(product.quantity));
+        row.appendChild(statusCell);
+        const actionCell = document.createElement("td");
+
+        const editPriceButton = document.createElement("button");
+        editPriceButton.className = "btn secondary";
+        editPriceButton.type = "button";
+        editPriceButton.textContent = "Edit Price";
+        editPriceButton.style.marginRight = "6px";
+        editPriceButton.addEventListener("click", async () => {
+          const entered = prompt(`New selling price for ${product.name}:`, product.price);
+          if (entered === null) return;
+          const newPrice = Number(entered);
+          if (!Number.isFinite(newPrice) || newPrice < 0) {
+            alert("Please enter a valid non-negative price.");
+            return;
+          }
+          try {
+            await apiRequest(`/products/${product.id}`, {
+              method: "PUT",
+              body: JSON.stringify({price: newPrice})
+            });
+            alert("Selling price updated successfully.");
+            await Promise.all([loadProducts(), loadDashboard()]);
+          } catch (error) {
+            alert("Could not update selling price: " + error.message);
+          }
+        });
+        actionCell.appendChild(editPriceButton);
+
+        const sellButton = document.createElement("button");
+        sellButton.className = "btn secondary";
+        sellButton.type = "button";
+        sellButton.textContent = "Sell";
+        sellButton.addEventListener("click", () => {
+          document.getElementById("saleProduct").value = String(product.id);
+          document.getElementById("saleQuantity").focus();
+          document.getElementById("createOrder").scrollIntoView({behavior:"smooth",block:"start"});
+          showPage("orders");
+        });
+        actionCell.appendChild(sellButton);
+        row.appendChild(actionCell);
+        tbody.appendChild(row);
+      });
+    }
+
+    select.innerHTML = '<option value="">Choose a product</option>';
+    cachedProducts.forEach(product => {
+      const option = document.createElement("option");
+      option.value = product.id;
+      option.textContent = `${product.name} â€” ${money(product.price)} (stock: ${product.quantity})`;
+      option.disabled = Number(product.quantity) <= 0;
+      select.appendChild(option);
+    });
+
+    const purchaseSelect = document.getElementById("purchaseProduct");
+    if (purchaseSelect) {
+      purchaseSelect.innerHTML = '<option value="">Choose a product</option>';
+      cachedProducts.forEach(product => {
+        const option = document.createElement("option");
+        option.value = product.id;
+        option.textContent = `${product.name} (current stock: ${product.quantity})`;
+        purchaseSelect.appendChild(option);
+      });
+      updatePurchaseTotal();
+    }
+
+    const totalProducts = cachedProducts.length;
+    const totalUnits = cachedProducts.reduce((sum, p) => sum + Number(p.quantity || 0), 0);
+    const lowStock = cachedProducts.filter(p => Number(p.quantity) > 0 && Number(p.quantity) <= 10).length;
+    const outOfStock = cachedProducts.filter(p => Number(p.quantity) === 0).length;
+    const inventoryStats = document.querySelectorAll("#page-inventory .stats .stat-info strong");
+    if (inventoryStats[0]) inventoryStats[0].textContent = totalProducts;
+    if (inventoryStats[1]) inventoryStats[1].textContent = totalUnits;
+    if (inventoryStats[2]) inventoryStats[2].textContent = lowStock;
+    if (inventoryStats[3]) inventoryStats[3].textContent = outOfStock;
+
+    const dashboardStats = document.querySelectorAll("#page-dashboard .stats .stat-info strong");
+    if (dashboardStats[0]) dashboardStats[0].textContent = totalProducts;
+    if (dashboardStats[2]) dashboardStats[2].textContent = totalUnits;
+    if (dashboardStats[3]) dashboardStats[3].textContent = outOfStock;
+  } catch (error) {
+    tbody.innerHTML = `<tr><td colspan="7">Could not load products: ${escapeHtml(error.message)}. Make sure Flask is running.</td></tr>`;
+    select.innerHTML = '<option value="">Products unavailable</option>';
+  }
+}
+
+async function loadSales() {
+  const tbody = document.getElementById("orderRows");
+  const empty = document.getElementById("salesEmpty");
+  try {
+    const result = await apiRequest("/sales");
+    const sales = result.sales || [];
+    tbody.innerHTML = "";
+    if (!sales.length) {
+      tbody.innerHTML = '<tr><td colspan="7">No sales recorded yet.</td></tr>';
+      if (empty) empty.style.display = "block";
+    } else {
+      if (empty) empty.style.display = "none";
+      sales.forEach(sale => {
+        const row = document.createElement("tr");
+        const date = sale.sale_date ? new Date(sale.sale_date.replace(" ","T") + (sale.sale_date.includes("Z") ? "" : "")).toLocaleString() : "â€”";
+        const values = ["SALE-" + sale.sale_id, date, sale.product_name, sale.quantity, money(sale.unit_price), money(sale.total_amount), sale.payment_method || "â€”"];
+        values.forEach(value => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          row.appendChild(cell);
+        });
+        tbody.appendChild(row);
+      });
+    }
+    const count = document.getElementById("orderCount");
+    const revenue = document.getElementById("salesRevenue");
+    const units = document.getElementById("salesUnits");
+    const payment = document.getElementById("lastPayment");
+    if (count) count.textContent = sales.length;
+    if (revenue) revenue.textContent = money(sales.reduce((sum, sale) => sum + Number(sale.total_amount || 0), 0));
+    if (units) units.textContent = sales.reduce((sum, sale) => sum + Number(sale.quantity || 0), 0);
+    if (payment) payment.textContent = sales.length ? (sales[0].payment_method || "â€”") : "â€”";
+  } catch (error) {
+    tbody.innerHTML = `<tr><td colspan="7">Could not load sales: ${escapeHtml(error.message)}. Make sure Flask is running.</td></tr>`;
+  }
+}
+
+async function loadStockMovements() {
+  const tbody = document.getElementById("movementRows");
+  try {
+    const result = await apiRequest("/stock-movements");
+    const movements = result.movements || [];
+    tbody.innerHTML = "";
+    if (!movements.length) {
+      tbody.innerHTML = '<tr><td colspan="7">No stock movements recorded yet.</td></tr>';
+      return;
+    }
+    movements.forEach(movement => {
+      const row = document.createElement("tr");
+      const date = movement.movement_date ? new Date(movement.movement_date.replace(" ","T")).toLocaleString() : "â€”";
+      const values = [movement.movement_id, date, movement.product_name, movement.movement_type, movement.quantity_change > 0 ? `+${movement.quantity_change}` : movement.quantity_change, movement.reference_id ?? "â€”", movement.notes || "â€”"];
+      values.forEach((value, index) => {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        if (index === 3) {
+          const badge = document.createElement("span");
+          badge.className = "status " + (movement.movement_type === "SALE" ? "warning" : "success");
+          badge.textContent = value;
+          cell.textContent = "";
+          cell.appendChild(badge);
+        }
+        row.appendChild(cell);
+      });
+      tbody.appendChild(row);
+    });
+  } catch (error) {
+    tbody.innerHTML = `<tr><td colspan="7">Could not load stock movements: ${escapeHtml(error.message)}.</td></tr>`;
+  }
+}
+
+function showSaleMessage(message, isError = false) {
+  const element = document.getElementById("saleMessage");
+  element.textContent = message;
+  element.style.display = "block";
+  element.style.border = isError ? "1px solid var(--red)" : "1px solid var(--green)";
+}
+
+document.getElementById("saleForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!form.reportValidity()) return;
+  const button = document.getElementById("submitSale");
+  button.disabled = true;
+  button.textContent = "Recording...";
+  try {
+    const result = await apiRequest("/sales", {
+      method: "POST",
+      body: JSON.stringify({
+        product_id: Number(document.getElementById("saleProduct").value),
+        quantity: Number(document.getElementById("saleQuantity").value),
+        payment_method: document.getElementById("salePayment").value
+      })
+    });
+    showSaleMessage(`Sale #${result.sale_id} recorded. ${result.product_name}: ${result.quantity_sold} sold, ${result.remaining_stock} remaining. Total: ${money(result.total_amount)}.`);
+    form.reset();
+    document.getElementById("saleQuantity").value = 1;
+    await Promise.all([loadProducts(), loadSales(), loadStockMovements(), loadDashboard()]);
+  } catch (error) {
+    showSaleMessage(error.message, true);
+  } finally {
+    button.disabled = false;
+    button.innerHTML = '<i class="fa-solid fa-check"></i> Record Sale';
+  }
+});
+
+document.getElementById("addProductForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!form.reportValidity()) return;
+  const data = new FormData(form);
+  try {
+    await apiRequest("/products", {
+      method: "POST",
+      body: JSON.stringify({
+        name: String(data.get("product") || "").trim(),
+        category: data.get("category") || "",
+        quantity: Number(data.get("quantity")),
+        price: Number(data.get("price"))
+      })
+    });
+    form.reset();
+    alert("Product saved to the database successfully.");
+    await Promise.all([loadProducts(), loadStockMovements(), loadDashboard()]);
+  } catch (error) {
+    alert("Could not save product: " + error.message);
+  }
+});
+
+
+function updatePurchaseTotal() {
+  const quantity = Number(document.getElementById("purchaseQuantity")?.value || 0);
+  const unitCost = Number(document.getElementById("purchaseCost")?.value || 0);
+  const total = quantity > 0 && unitCost >= 0 ? quantity * unitCost : 0;
+  const totalInput = document.getElementById("purchaseTotal");
+  if (totalInput) totalInput.value = money(total);
+}
+
+document.getElementById("purchaseProduct").addEventListener("change", event => {
+  const selectedId = Number(event.target.value);
+  const product = cachedProducts.find(item => Number(item.id) === selectedId);
+  const costInput = document.getElementById("purchaseCost");
+  // Selling price and purchase cost are different. Only reuse a saved purchase cost.
+  costInput.value = product && product.cost_price !== null && product.cost_price !== undefined
+    ? Number(product.cost_price)
+    : "";
+  updatePurchaseTotal();
+});
+document.getElementById("purchaseQuantity").addEventListener("input", updatePurchaseTotal);
+document.getElementById("purchaseCost").addEventListener("input", updatePurchaseTotal);
+
+document.getElementById("purchaseForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!form.reportValidity()) return;
+  const button = document.getElementById("submitPurchase");
+  const formData = new FormData(form);
+  button.disabled = true;
+  button.textContent = "Saving Purchase...";
+  try {
+    const result = await apiRequest("/purchases", {
+      method: "POST",
+      body: JSON.stringify({
+        supplier_name: String(formData.get("supplier_name") || "").trim(),
+        items: [{
+          product_id: Number(formData.get("product_id")),
+          quantity: Number(formData.get("quantity")),
+          unit_cost: Number(formData.get("unit_cost"))
+        }],
+        notes: String(formData.get("notes") || "").trim()
+      })
+    });
+    showPurchaseMessage(`Purchase PUR-${result.purchase_id} saved successfully. ${result.items_count} item(s) added to stock. Total: ${money(result.total_amount)}.`);
+    form.reset();
+    updatePurchaseTotal();
+    await Promise.all([loadPurchases(), loadProducts(), loadStockMovements(), loadDashboard()]);
+  } catch (error) {
+    showPurchaseMessage(error.message, true);
+  } finally {
+    button.disabled = false;
+    button.innerHTML = '<i class="fa-solid fa-check"></i> Submit Purchase Order';
+  }
+});
+
+document.getElementById("refreshSales").addEventListener("click", loadSales);
+document.getElementById("refreshPurchases").addEventListener("click", loadPurchases);
+document.getElementById("refreshMovements").addEventListener("click", loadStockMovements);
+
+window.addEventListener("DOMContentLoaded", () => {
+  loadDashboard();
+  loadProducts();
+  loadSales();
+  loadStockMovements();
+  loadPurchases();
+  loadReports();
+});
+
+document.querySelectorAll(".demo-form:not(#addProductForm)").forEach(form=>{
+  form.addEventListener("submit",event=>{
+    event.preventDefault();
+    if(!form.reportValidity()) return;
+
+    if(form.closest("#addProduct")) {
+      const data = new FormData(form);
+      const name = data.get("product");
+      const sku = data.get("sku");
+      const category = data.get("category");
+      const quantity = Number(data.get("quantity"));
+      const price = Number(data.get("price"));
+      const status = quantity === 0
+        ? '<span class="status danger">Out of Stock</span>'
+        : quantity <= 10
+        ? '<span class="status warning">Low Stock</span>'
+        : '<span class="status success">In Stock</span>';
+
+      const row = document.createElement("tr");
+      [name,sku,category,String(quantity),"EGP "+price.toFixed(2)].forEach(value=>{
+        const cell=document.createElement("td");
+        cell.textContent=value;
+        row.appendChild(cell);
+      });
+      const statusCell=document.createElement("td");
+      statusCell.innerHTML=status;
+      row.appendChild(statusCell);
+      const actionCell=document.createElement("td");
+      const editButton=document.createElement("button");
+      editButton.className="btn secondary edit-product";
+      editButton.textContent="Edit";
+      actionCell.appendChild(editButton);
+      row.appendChild(actionCell);
+      document.getElementById("inventoryRows").appendChild(row);
+      form.reset();
+      alert("Product added to the current demo table.");
+    } else if(form.closest("#createOrder")) {
+      const data = new FormData(form);
+      const row=document.createElement("tr");
+      const values=[
+        "ORD-"+(1001+document.getElementById("orderRows").rows.length),
+        data.get("customer"),
+        new Date().toISOString().slice(0,10),
+        data.get("quantity"),
+        "Pending",
+        "Pending"
+      ];
+      values.forEach((value,index)=>{
+        const cell=document.createElement("td");
+        cell.textContent=index===4?"EGP â€”":value;
+        if(index===5) cell.innerHTML='<span class="status warning">Pending</span>';
+        row.appendChild(cell);
+      });
+      document.getElementById("orderRows").prepend(row);
+      document.getElementById("orderCount").textContent=document.getElementById("orderRows").rows.length;
+      form.reset();
+      alert("Order added to the current demo table.");
+    } else {
+      alert("Submitted for this demo. Permanent saving requires a database connection.");
+      form.reset();
+    }
+  });
+});
+
+// Inventory rows are loaded from the backend; sales are recorded through the API-backed form.
+
+window.addEventListener("hashchange",()=>{
+  showPage(location.hash.slice(1));
+});
+
+showPage(location.hash.slice(1) || "dashboard");
+
+const authScreen=document.getElementById('authScreen');
+function showAuthScreen(){authScreen.style.display='flex';document.querySelector('.app').style.display='none';}
+function showApp(user){authScreen.style.display='none';document.querySelector('.app').style.display='flex';document.getElementById('accountName').textContent=user.full_name||'Account';document.getElementById('accountEmail').textContent=user.email||'';loadDashboard();loadProducts();loadSales();loadPurchases();loadStockMovements();}
+let authLanguage = "en";
+function setAuthLanguage(lang){
+  authLanguage=lang;
+  const rtl=lang==="ar";
+  document.documentElement.lang=lang;
+  document.documentElement.dir=rtl?"rtl":"ltr";
+  document.querySelectorAll("#authScreen [data-en][data-ar]").forEach(el=>{
+    el.innerHTML=rtl?el.dataset.ar:el.dataset.en;
+  });
+  document.getElementById("languageToggle").innerHTML=rtl?'<i class="fa-solid fa-globe"></i> English':'<i class="fa-solid fa-globe"></i> العربية';
+}
+document.getElementById("languageToggle").addEventListener("click",()=>setAuthLanguage(authLanguage==="en"?"ar":"en"));
+document.querySelectorAll(".password-toggle").forEach(button=>{
+  button.addEventListener("click",()=>{
+    const input=document.getElementById(button.dataset.target);
+    const show=input.type==="password";
+    input.type=show?"text":"password";
+    button.innerHTML=show?'<i class="fa-regular fa-eye-slash"></i>':'<i class="fa-regular fa-eye"></i>';
+    button.setAttribute("aria-label",show?"Hide password":"Show password");
+  });
+});
+setAuthLanguage("en");
+function authTab(login){document.getElementById('loginForm').hidden=!login;document.getElementById('registerForm').hidden=login;document.getElementById('loginTab').classList.toggle('active',login);document.getElementById('registerTab').classList.toggle('active',!login);}
+document.getElementById('loginTab').onclick=()=>authTab(true);document.getElementById('registerTab').onclick=()=>authTab(false);document.getElementById('switchToRegister').onclick=()=>authTab(false);document.getElementById('switchToLogin').onclick=()=>authTab(true);document.getElementById('forgotLink').onclick=e=>{e.preventDefault();authError('loginMessage','Password reset is not configured yet. Please contact the administrator.');};
+function authError(id,msg){const e=document.getElementById(id);e.textContent=msg;e.className='auth-message error';}
+document.getElementById('registerForm').addEventListener('submit',async e=>{e.preventDefault();const password=document.getElementById('registerPassword').value;if(password!==document.getElementById('registerConfirm').value){authError('registerMessage','Passwords do not match.');return;}try{const r=await fetch('/register',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:document.getElementById('registerName').value,email:document.getElementById('registerEmail').value,password,remember_me:document.getElementById('registerRemember').checked})});const d=await r.json();if(!r.ok)throw Error(d.message);const me=await fetch('/auth/me',{credentials:'same-origin'});showApp((await me.json()).user);}catch(err){authError('registerMessage',err.message||'Registration failed.');}});
+document.getElementById('loginForm').addEventListener('submit',async e=>{e.preventDefault();try{const r=await fetch('/login',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('loginEmail').value,password:document.getElementById('loginPassword').value,remember_me:document.getElementById('loginRemember').checked})});const d=await r.json();if(!r.ok)throw Error(d.message);showApp(d.user);}catch(err){authError('loginMessage',err.message||'Login failed.');}});
+(async()=>{try{const r=await fetch('/auth/me',{credentials:'same-origin'});const d=await r.json();if(d.authenticated)showApp(d.user);else showAuthScreen();}catch(e){showAuthScreen();}})();
+
+</script>
+</body>
+</html>

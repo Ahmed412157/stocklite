@@ -1,0 +1,9 @@
+StockLite Multi-User update
+
+Back up your existing stocklite.db before running this version.
+The database migration adds email/full_name and ownership fields without dropping existing records.
+The first newly registered account claims existing unowned products, sales, purchases and stock movements.
+All future accounts have separate records. API endpoints require a login and filter data by account ID.
+The old testuser account has no email, so use Create Account with the email that should own your existing data. Do not try to use testuser in the new email login.
+Remember Me keeps a signed session cookie for 30 days. Without it, the session cookie ends when the browser session ends.
+Before public deployment, set a strong SECRET_KEY and enable secure cookies over HTTPS.
