@@ -2,6 +2,7 @@ services:
   - type: web
     name: stocklite
     runtime: python
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
@@ -9,3 +10,5 @@ services:
         generateValue: true
       - key: COOKIE_SECURE
         value: "1"
+      - key: DATABASE_URL
+        sync: false

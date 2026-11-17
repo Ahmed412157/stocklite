@@ -1,9 +1,7 @@
-StockLite Multi-User update
+StockLite PostgreSQL / Neon deployment
 
-Back up your existing stocklite.db before running this version.
-The database migration adds email/full_name and ownership fields without dropping existing records.
-The first newly registered account claims existing unowned products, sales, purchases and stock movements.
-All future accounts have separate records. API endpoints require a login and filter data by account ID.
-The old testuser account has no email, so use Create Account with the email that should own your existing data. Do not try to use testuser in the new email login.
-Remember Me keeps a signed session cookie for 30 days. Without it, the session cookie ends when the browser session ends.
-Before public deployment, set a strong SECRET_KEY and enable secure cookies over HTTPS.
+This version uses PostgreSQL through psycopg 3. Configure DATABASE_URL in Render using the Neon pooled connection string. Keep sslmode=require in the URL.
+
+The Neon database is initially empty. SQLite stocklite.db is intentionally not uploaded and is not automatically imported. Create a user account after deployment, then add products. If you need existing SQLite records, request a separate data migration before using the hosted app.
+
+Render environment variables: DATABASE_URL, SECRET_KEY (generated), COOKIE_SECURE=1.
